@@ -5251,3 +5251,8 @@ swatch	Bright Violet	Violet cerah
 	Plaster	Plester
 	Note Paper…	Kertas Catatan…
 	Note Paper	Kertas Catatan
+
+# Low-poly generator
+	Low-Poly Generator…	Generator Low-Poly…
+	Low-Poly Generator	Generator Low-Poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Segitiga tidak dapat dibuat; sesuaikan ambang batas masker atau mode batas

@@ -4854,3 +4854,8 @@ effect	Soft	Weich
 	Plaster	Gipsabdruck
 	Note Paper…	Prägepapier…
 	Note Paper	Prägepapier
+
+# Low-poly generator
+	Low-Poly Generator…	Low-Poly-Generator…
+	Low-Poly Generator	Low-Poly-Generator
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Es konnten keine Dreiecke erzeugt werden; passen Sie den Maskenschwellenwert oder den Begrenzungsmodus an

@@ -5125,3 +5125,8 @@ mark-style	Japanese	Japońskie
 	Plaster	Gips
 	Note Paper…	Papier listowy…
 	Note Paper	Papier listowy
+
+# Low-poly generator
+	Low-Poly Generator…	Generator low-poly…
+	Low-Poly Generator	Generator low-poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Nie udało się wygenerować trójkątów; dostosuj próg maski lub tryb granicy

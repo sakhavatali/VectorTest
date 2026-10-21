@@ -5110,3 +5110,8 @@ lighting	Light	光源
 	Plaster	塑料效果
 	Note Paper…	便条纸…
 	Note Paper	便条纸
+
+# Low-poly generator
+	Low-Poly Generator…	低多边形生成器…
+	Low-Poly Generator	低多边形生成器
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	无法生成三角形；请调整蒙版阈值或边界模式

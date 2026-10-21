@@ -5259,3 +5259,8 @@ imageTrace	Outline	Körvonal
 	Plaster	Gipsz
 	Note Paper…	Jegyzetpapír…
 	Note Paper	Jegyzetpapír
+
+# Low-poly generator
+	Low-Poly Generator…	Low-poly generátor…
+	Low-Poly Generator	Low-poly generátor
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Nem sikerült háromszögeket létrehozni; módosítsa a maszk küszöbértékét vagy a határmódot

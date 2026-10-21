@@ -5190,3 +5190,8 @@ mark-style	Japanese	Japonesas
 	Plaster	Gesso
 	Note Paper…	Papel de carta…
 	Note Paper	Papel de carta
+
+# Low-poly generator
+	Low-Poly Generator…	Gerador Low-Poly…
+	Low-Poly Generator	Gerador Low-Poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Não foi possível gerar triângulos; ajuste o limite da máscara ou o modo de limite

@@ -4887,3 +4887,8 @@ lighting	Light	Luce
 	Plaster	Gesso
 	Note Paper…	Carta da lettere…
 	Note Paper	Carta da lettere
+
+# Low-poly generator
+	Low-Poly Generator…	Generatore low-poly…
+	Low-Poly Generator	Generatore low-poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Impossibile generare triangoli; regola la soglia della maschera o la modalità del contorno

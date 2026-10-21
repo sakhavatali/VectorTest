@@ -5225,3 +5225,8 @@ effect	Points	Σημεία
 	Plaster	Γύψος
 	Note Paper…	Χαρτί σημειώσεων…
 	Note Paper	Χαρτί σημειώσεων
+
+# Low-poly generator
+	Low-Poly Generator…	Γεννήτρια Low-Poly…
+	Low-Poly Generator	Γεννήτρια Low-Poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Δεν ήταν δυνατή η δημιουργία τριγώνων· προσαρμόστε το όριο της μάσκας ή τη λειτουργία ορίου

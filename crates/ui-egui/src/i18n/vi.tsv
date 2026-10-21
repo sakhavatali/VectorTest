@@ -4867,3 +4867,8 @@ theme	Appearance	Giao diện
 	Plaster	Thạch cao
 	Note Paper…	Giấy ghi chú…
 	Note Paper	Giấy ghi chú
+
+# Low-poly generator
+	Low-Poly Generator…	Trình tạo low-poly…
+	Low-Poly Generator	Trình tạo low-poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Không thể tạo tam giác; hãy điều chỉnh ngưỡng mặt nạ hoặc chế độ ranh giới

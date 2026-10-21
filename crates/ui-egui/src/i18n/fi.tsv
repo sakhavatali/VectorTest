@@ -5304,3 +5304,8 @@ swatch	Bright Violet	Kirkas violetti
 	Plaster	Kipsi
 	Note Paper…	Kirjepaperi…
 	Note Paper	Kirjepaperi
+
+# Low-poly generator
+	Low-Poly Generator…	Low-poly-generaattori…
+	Low-Poly Generator	Low-poly-generaattori
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Kolmioita ei voitu luoda; säädä maskin kynnysarvoa tai rajatilaa

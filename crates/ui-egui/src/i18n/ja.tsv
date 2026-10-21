@@ -4927,3 +4927,8 @@ lighting	Light	ライト
 	Plaster	石膏
 	Note Paper…	ノート用紙…
 	Note Paper	ノート用紙
+
+# Low-poly generator
+	Low-Poly Generator…	ローポリジェネレーター…
+	Low-Poly Generator	ローポリジェネレーター
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	三角形を生成できませんでした。マスクのしきい値または境界モードを調整してください

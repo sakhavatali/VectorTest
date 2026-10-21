@@ -5251,3 +5251,8 @@ swatch	Bright Violet	Kraftig violet
 	Plaster	Gips
 	Note Paper…	Notatpapir…
 	Note Paper	Notatpapir
+
+# Low-poly generator
+	Low-Poly Generator…	Low-poly-generator…
+	Low-Poly Generator	Low-poly-generator
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Der kunne ikke genereres trekanter; justér masketærsklen eller grænsetilstanden

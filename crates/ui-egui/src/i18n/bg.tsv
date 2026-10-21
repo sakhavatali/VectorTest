@@ -5233,3 +5233,8 @@ theme	Appearance	Външен вид
 	Plaster	Гипс
 	Note Paper…	Хартия за писма…
 	Note Paper	Хартия за писма
+
+# Low-poly generator
+	Low-Poly Generator…	Генератор на нискополигонални изображения…
+	Low-Poly Generator	Генератор на нискополигонални изображения
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Не можаха да се генерират триъгълници; коригирайте прага на маската или режима на границата

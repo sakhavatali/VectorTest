@@ -5229,3 +5229,8 @@ theme	Appearance	Utseende
 	Plaster	Gips
 	Note Paper…	Anteckningspapper…
 	Note Paper	Anteckningspapper
+
+# Low-poly generator
+	Low-Poly Generator…	Low-poly-generator…
+	Low-Poly Generator	Low-poly-generator
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Inga trianglar kunde skapas; justera maskens tröskelvärde eller gränsläget

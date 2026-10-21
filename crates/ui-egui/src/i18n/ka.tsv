@@ -5180,3 +5180,8 @@ imageTrace	Outline	კონტური
 	Plaster	თაბაშირი
 	Note Paper…	ჩანაწერების ქაღალდი…
 	Note Paper	ჩანაწერების ქაღალდი
+
+# Low-poly generator
+	Low-Poly Generator…	დაბალპოლიგონური გენერატორი…
+	Low-Poly Generator	დაბალპოლიგონური გენერატორი
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	სამკუთხედების შექმნა ვერ მოხერხდა; შეცვალეთ ნიღბის ზღვარი ან საზღვრის რეჟიმი

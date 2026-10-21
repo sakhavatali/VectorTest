@@ -5293,3 +5293,8 @@ swatch	Bright Violet	Felviolet
 	Plaster	Gips
 	Note Paper…	Notitiepapier…
 	Note Paper	Notitiepapier
+
+# Low-poly generator
+	Low-Poly Generator…	Low-poly-generator…
+	Low-Poly Generator	Low-poly-generator
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Er konden geen driehoeken worden gegenereerd; pas de maskerdrempel of de grensmodus aan

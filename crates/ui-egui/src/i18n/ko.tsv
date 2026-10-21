@@ -4850,3 +4850,8 @@ lighting	Light	광원
 	Plaster	석고
 	Note Paper…	메모지…
 	Note Paper	메모지
+
+# Low-poly generator
+	Low-Poly Generator…	로우 폴리 생성기…
+	Low-Poly Generator	로우 폴리 생성기
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	삼각형을 생성할 수 없습니다. 마스크 임계값 또는 경계 모드를 조정하세요

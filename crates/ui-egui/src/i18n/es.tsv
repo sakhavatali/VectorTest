@@ -5215,3 +5215,8 @@ mark-style	Japanese	Japonesas
 	Plaster	Yeso
 	Note Paper…	Papel con relieve…
 	Note Paper	Papel con relieve
+
+# Low-poly generator
+	Low-Poly Generator…	Generador low-poly…
+	Low-Poly Generator	Generador low-poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	No se pudieron generar triángulos; ajusta el umbral de la máscara o el modo de límite

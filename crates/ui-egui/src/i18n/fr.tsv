@@ -5272,3 +5272,8 @@ theme	Appearance	Apparence
 	Plaster	Plâtre
 	Note Paper…	Papier gaufré…
 	Note Paper	Papier gaufré
+
+# Low-poly generator
+	Low-Poly Generator…	Générateur low-poly…
+	Low-Poly Generator	Générateur low-poly
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Aucun triangle n’a pu être généré ; ajustez le seuil du masque ou le mode de limite

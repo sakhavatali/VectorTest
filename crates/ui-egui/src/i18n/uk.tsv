@@ -4867,3 +4867,8 @@ lighting	Light	Світло
 	Plaster	Гіпс
 	Note Paper…	Поштовий папір…
 	Note Paper	Поштовий папір
+
+# Low-poly generator
+	Low-Poly Generator…	Генератор низькополігональної графіки…
+	Low-Poly Generator	Генератор низькополігональної графіки
+@msg	no triangles could be generated; adjust the mask threshold or boundary mode	Не вдалося створити трикутники; налаштуйте поріг маски або режим межі
