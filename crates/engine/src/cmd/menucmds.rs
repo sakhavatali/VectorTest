@@ -112,7 +112,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Low-Poly Generator…",
             ["Object"],
             None,
-            "{mode?: natural|silhouette|illustration (natural), density?: 0..100 (45; low = large facets), edgePreservation?: 0..100 (70), colorMode?: original|palette|vibrant (original), boundary?: preserve|whole|transparent (preserve), maskThreshold?: 1..255 (48), seed?: n (1), deleteRaster?: bool (false)} create editable coloured triangle facets from the selected raster image → {id, triangles}",
+            "{mode?: natural|silhouette|illustration (natural), density?: 0..100 (45; low = large facets), edgePreservation?: 0..100 (70), colorMode?: original|palette|vibrant (original), boundary?: preserve|whole|transparent (preserve), maskThreshold?: 1..255 (48), seed?: n (1), deleteRaster?: bool (false; otherwise preserve the source, hiding it for cut-out modes)} create editable coloured triangle facets from the selected raster image → {id, triangles}",
             has_image,
             object_low_poly
         ),
@@ -742,6 +742,14 @@ fn object_low_poly(s: &mut Session, p: &Value) -> Result<Value> {
         d.insert(parent, index + 1, group)?;
         if delete {
             d.remove(id)?;
+        } else if boundary != vectorcraft_trace::LowPolyBoundary::Whole
+            && (mode == vectorcraft_trace::LowPolyMode::Silhouette || boundary == vectorcraft_trace::LowPolyBoundary::Transparent)
+        {
+            // A cut-out should reveal the transparent exterior, not the original opaque background.
+            // The raster remains in the document and can be shown again from the Layers panel.
+            if let Some(source) = d.node_mut(id) {
+                source.visible = false;
+            }
         }
         selection.set([gid]);
         Ok((gid, count))

@@ -296,6 +296,8 @@ fn make_mask(img: &Raster, params: &LowPolyParams) -> Option<Vec<bool>> {
     )
 }
 
+/// This helper intentionally keeps the raster, mask, bounds and sampling inputs explicit.
+#[allow(clippy::too_many_arguments)]
 fn add_point(
     points: &mut Vec<Point2>,
     seen: &mut HashSet<(i32, i32)>,
