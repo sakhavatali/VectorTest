@@ -48,6 +48,9 @@ fn choices(command: &str, key: &str) -> Option<form::Choices> {
         ("graph.setType", "pieLegend") => Some(PIE_LEGEND),
         ("graph.setType", "piePosition") => Some(PIE_POSITION),
         ("graph.setType", "pieSort") => Some(PIE_SORT),
+        ("object.createLowPoly", "mode") => Some(LOW_POLY_MODES),
+        ("object.createLowPoly", "colorMode") => Some(LOW_POLY_COLORS),
+        ("object.createLowPoly", "boundary") => Some(LOW_POLY_BOUNDARIES),
         _ => None,
     }
 }
@@ -79,6 +82,12 @@ const PIE_SORT: form::Choices = &[("All", "all"), ("First", "first"), ("None", "
 
 /// Graph Type › Tick Marks › Length.
 const GRAPH_TICK_LENGTH: form::Choices = &[("None", "none"), ("Short", "short"), ("Full Width", "full")];
+
+/// Low-Poly Generator dropdowns.
+const LOW_POLY_MODES: form::Choices = &[("Natural Image", "natural"), ("Silhouette", "silhouette"), ("Illustration", "illustration")];
+const LOW_POLY_COLORS: form::Choices = &[("Original Colors", "original"), ("Limited Palette", "palette"), ("Vibrant", "vibrant")];
+const LOW_POLY_BOUNDARIES: form::Choices =
+    &[("Preserve Source", "preserve"), ("Whole Image", "whole"), ("Transparent / Auto Mask", "transparent")];
 
 /// Closes before running, so a dialog the command opens stays open.
 fn confirm(app: &mut VectorcraftApp, d: &Dialog) -> Result<Value, String> {

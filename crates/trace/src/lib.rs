@@ -49,6 +49,7 @@ mod fit;
 mod gradient;
 mod group;
 mod logo;
+mod low_poly;
 mod mosaic;
 mod quantize;
 mod shapes;
@@ -62,6 +63,7 @@ use vectorcraft_geom::PathData;
 
 pub use contour::{Component, Loop, trace_mask};
 pub use gradient::TracedGradient;
+pub use low_poly::{LowPolyBoundary, LowPolyColorMode, LowPolyMode, LowPolyParams, LowPolyTriangle, low_poly};
 pub use mosaic::mosaic;
 pub use quantize::{FULL_TONE_MAX, Quantized, TRANSPARENT, denoise, quantize};
 pub use shapes::TracedShape;
@@ -74,6 +76,8 @@ pub enum TraceError {
     Decode(String),
     #[error("image is empty")]
     Empty,
+    #[error("no triangles could be generated; adjust the mask threshold or boundary mode")]
+    NoTriangles,
     #[error("the image is {width} × {height} pixels, more than Image Trace takes ({max} megapixels)")]
     TooLarge { width: u32, height: u32, max: u64 },
     #[error("this isn't a flat-colour logo ({:.0}% of its solid areas match a few flat colours), so Flat Logo mode would turn its gradients into patches: use Color mode instead", (.fraction * 100.0).floor())]

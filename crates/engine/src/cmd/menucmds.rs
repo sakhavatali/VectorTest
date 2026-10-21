@@ -108,6 +108,15 @@ pub fn specs() -> Vec<CommandSpec> {
             object_mosaic
         ),
         cmd!(
+            "object.createLowPoly",
+            "Low-Poly Generator…",
+            ["Object"],
+            None,
+            "{mode?: natural|silhouette|illustration (natural), density?: 0..100 (45; low = large facets), edgePreservation?: 0..100 (70), colorMode?: original|palette|vibrant (original), boundary?: preserve|whole|transparent (preserve), maskThreshold?: 1..255 (48), seed?: n (1), deleteRaster?: bool (false)} create editable coloured triangle facets from the selected raster image → {id, triangles}",
+            has_image,
+            object_low_poly
+        ),
+        cmd!(
             "object.cropImage",
             "Crop Image",
             ["Object"],
@@ -652,6 +661,92 @@ fn object_mosaic(s: &mut Session, p: &Value) -> Result<Value> {
         Ok((gid, n))
     })?;
     Ok(json!({ "id": gid.0, "tiles": n }))
+}
+
+fn object_low_poly(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "object.createLowPoly";
+    let st = s.doc()?;
+    let id = st
+        .selection
+        .objects
+        .iter()
+        .copied()
+        .find(|id| matches!(st.doc.node(*id).map(|n| &n.kind), Some(NodeKind::Image(_))))
+        .ok_or_else(|| bad(C, "select an image"))?;
+    let node = st.doc.node(id).cloned().ok_or(EngineError::NoNode(id))?;
+    let NodeKind::Image(im) = &node.kind else { return Err(bad(C, "select an image")) };
+    if im.width < 2 || im.height < 2 {
+        return Err(bad(C, "the selected image has invalid dimensions"));
+    }
+    let blob = st.doc.images.get(&im.key).filter(|blob| !blob.bytes.is_empty()).ok_or_else(|| bad(C, "the image has no embedded pixels"))?;
+    let raster = vectorcraft_trace::Raster::decode_to_fit(&blob.bytes).map_err(|e| bad(C, e.to_string()))?;
+
+    check_numbers(p, &["density", "edgePreservation", "maskThreshold", "seed"], C)?;
+    let mode = match p.get("mode").and_then(Value::as_str).unwrap_or("natural") {
+        "natural" => vectorcraft_trace::LowPolyMode::Natural,
+        "silhouette" => vectorcraft_trace::LowPolyMode::Silhouette,
+        "illustration" => vectorcraft_trace::LowPolyMode::Illustration,
+        _ => return Err(bad(C, "mode must be natural, silhouette or illustration")),
+    };
+    let color_mode = match p.get("colorMode").and_then(Value::as_str).unwrap_or("original") {
+        "original" => vectorcraft_trace::LowPolyColorMode::Original,
+        "palette" => vectorcraft_trace::LowPolyColorMode::Palette,
+        "vibrant" => vectorcraft_trace::LowPolyColorMode::Vibrant,
+        _ => return Err(bad(C, "colorMode must be original, palette or vibrant")),
+    };
+    let boundary = match p.get("boundary").and_then(Value::as_str).unwrap_or("preserve") {
+        "preserve" => vectorcraft_trace::LowPolyBoundary::Preserve,
+        "whole" => vectorcraft_trace::LowPolyBoundary::Whole,
+        "transparent" => vectorcraft_trace::LowPolyBoundary::Transparent,
+        _ => return Err(bad(C, "boundary must be preserve, whole or transparent")),
+    };
+    let params = vectorcraft_trace::LowPolyParams {
+        mode,
+        density: whole_or(p, "density", 45, C)?.min(100) as u8,
+        edge_preservation: whole_or(p, "edgePreservation", 70, C)?.min(100) as u8,
+        color_mode,
+        boundary,
+        mask_threshold: whole_or(p, "maskThreshold", 48, C)?.clamp(1, 255) as u8,
+        seed: whole_or(p, "seed", 1, C)?,
+    };
+    let triangles = vectorcraft_trace::low_poly(&raster, &params).map_err(|e| bad(C, e.to_string()))?;
+    let delete = bool_or(p, "deleteRaster", false);
+    let (gid, count) = s.edit("Low-Poly Generator", |d, selection| {
+        let mut facets = Vec::with_capacity(triangles.len());
+        for triangle in &triangles {
+            let [r, g, b, alpha] = triangle.color;
+            if alpha == 0 {
+                continue;
+            }
+            let points = triangle.points.map(|point| {
+                im.xf * Point::new(
+                    point[0] * im.width as f64 / raster.width as f64,
+                    point[1] * im.height as f64 / raster.height as f64,
+                )
+            });
+            let color = Color::rgb(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0);
+            let mut facet = Node::path(d.alloc_id(), polygon_path(&points), Appearance::basic(Paint::solid(color), Paint::None, 0.0));
+            if alpha < 255 {
+                facet.opacity = alpha as f32 / 255.0;
+            }
+            facets.push(Arc::new(facet));
+        }
+        if facets.is_empty() {
+            return Err(bad(C, "no visible facets were generated; adjust the boundary mode or mask threshold"));
+        }
+        let count = facets.len();
+        let (parent, index, _) = d.position(id).ok_or(EngineError::NoNode(id))?;
+        let gid = d.alloc_id();
+        let mut group = Node::group(gid, facets);
+        group.name = Some("Low-Poly Artwork".into());
+        d.insert(parent, index + 1, group)?;
+        if delete {
+            d.remove(id)?;
+        }
+        selection.set([gid]);
+        Ok((gid, count))
+    })?;
+    Ok(json!({ "id": gid.0, "triangles": count }))
 }
 
 fn polygon_path(pts: &[Point]) -> PathData {
