@@ -231,9 +231,9 @@ fn analysis_size(width: u32, height: u32) -> (u32, u32) {
     let mut h = ((height as f64 * scale).floor() as u32).clamp(2, height);
     if u64::from(w) * u64::from(h) > MAX_ANALYSIS_PIXELS {
         if w >= h {
-            w = (MAX_ANALYSIS_PIXELS / u64::from(h)).max(2).min(w);
+            w = (MAX_ANALYSIS_PIXELS / u64::from(h)).max(2).min(u64::from(w)) as u32;
         } else {
-            h = (MAX_ANALYSIS_PIXELS / u64::from(w)).max(2).min(h);
+            h = (MAX_ANALYSIS_PIXELS / u64::from(w)).max(2).min(u64::from(h)) as u32;
         }
     }
     (w, h)
