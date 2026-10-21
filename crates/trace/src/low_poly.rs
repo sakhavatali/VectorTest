@@ -139,7 +139,7 @@ pub fn low_poly(img: &Raster, params: &LowPolyParams) -> Result<Vec<LowPolyTrian
     let mut row = 0u64;
     let mut y = 0.0;
     while y < height as f64 && points.len() < BASE_POINT_LIMIT {
-        let x_offset = if row % 2 == 0 { 0.0 } else { spacing * 0.5 };
+        let x_offset = if row.is_multiple_of(2) { 0.0 } else { spacing * 0.5 };
         let mut col = 0u64;
         let mut x = x_offset;
         while x < width as f64 && points.len() < BASE_POINT_LIMIT {
@@ -240,7 +240,7 @@ fn analysis_size(width: u32, height: u32) -> (u32, u32) {
 }
 
 fn make_mask(img: &Raster, params: &LowPolyParams) -> Option<Vec<bool>> {
-    let has_alpha = img.rgba.chunks_exact(4).any(|pixel| pixel.get(3).copied().unwrap_or(255) < 250);
+    let has_alpha = img.rgba.as_chunks::<4>().0.iter().any(|pixel| pixel[3] < 250);
     let infer_from_border = params.mode == LowPolyMode::Silhouette || params.boundary == LowPolyBoundary::Transparent;
     if params.boundary == LowPolyBoundary::Whole {
         return None;
