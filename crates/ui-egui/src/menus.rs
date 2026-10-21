@@ -2529,6 +2529,11 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                     "object.createObjectMosaic",
                     json!({"columns": 10, "rows": 10, "spacingX": 0, "spacingY": 0, "gray": false, "deleteRaster": false}),
                 ),
+                cp(
+                    "Low-Poly Generator…",
+                    "object.createLowPoly",
+                    json!({"mode": "natural", "density": 45, "edgePreservation": 70, "colorMode": "original", "boundary": "preserve", "maskThreshold": 48, "seed": 1, "deleteRaster": false}),
+                ),
                 c("Vector Halftone…", "object.vectorHalftone"),
                 c("Create Trim Marks", "object.createTrimMarks"),
                 c("Flatten Transparency…", "ui.flattenTransparencyDialog"),
@@ -4614,6 +4619,20 @@ mod tests {
 
     /// #543: Object › Image Trace › Make and Make and Expand trace with the Default preset at once,
     /// with no form asking for a preset's name.
+    #[test]
+    fn low_poly_generator_opens_its_settings_dialog() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());
+        app.run("file.new", json!({})).unwrap();
+        let entry = menu_entries(&app)
+            .into_iter()
+            .find(|entry| entry.command.as_deref() == Some("object.createLowPoly"))
+            .unwrap();
+        assert_eq!(entry.path, ["Object"]);
+        let (command, params) = click_target(&entry.label, "object.createLowPoly", &entry.params);
+        assert_eq!(command, "ui.paramDialog");
+        assert_eq!(params["command"], "object.createLowPoly");
+    }
+
     #[test]
     fn image_trace_make_traces_with_the_default_preset() {
         let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());
