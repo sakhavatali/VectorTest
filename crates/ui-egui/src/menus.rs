@@ -4623,10 +4623,7 @@ mod tests {
     fn low_poly_generator_opens_its_settings_dialog() {
         let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
-        let entry = menu_entries(&app)
-            .into_iter()
-            .find(|entry| entry.command.as_deref() == Some("object.createLowPoly"))
-            .unwrap();
+        let entry = menu_entries(&app).into_iter().find(|entry| entry.command.as_deref() == Some("object.createLowPoly")).unwrap();
         assert_eq!(entry.path, ["Object"]);
         let (command, params) = click_target(&entry.label, "object.createLowPoly", &entry.params);
         assert_eq!(command, "ui.paramDialog");

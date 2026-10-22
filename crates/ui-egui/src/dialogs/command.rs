@@ -86,8 +86,7 @@ const GRAPH_TICK_LENGTH: form::Choices = &[("None", "none"), ("Short", "short"),
 /// Low-Poly Generator dropdowns.
 const LOW_POLY_MODES: form::Choices = &[("Natural Image", "natural"), ("Silhouette", "silhouette"), ("Illustration", "illustration")];
 const LOW_POLY_COLORS: form::Choices = &[("Original Colors", "original"), ("Limited Palette", "palette"), ("Vibrant", "vibrant")];
-const LOW_POLY_BOUNDARIES: form::Choices =
-    &[("Preserve Source", "preserve"), ("Whole Image", "whole"), ("Transparent / Auto Mask", "transparent")];
+const LOW_POLY_BOUNDARIES: form::Choices = &[("Preserve Source", "preserve"), ("Whole Image", "whole"), ("Transparent / Auto Mask", "transparent")];
 
 /// Closes before running, so a dialog the command opens stays open.
 fn confirm(app: &mut VectorcraftApp, d: &Dialog) -> Result<Value, String> {

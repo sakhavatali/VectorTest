@@ -144,22 +144,8 @@ pub fn low_poly(img: &Raster, params: &LowPolyParams) -> Result<Vec<LowPolyTrian
         let mut x = x_offset;
         while x < width as f64 && points.len() < BASE_POINT_LIMIT {
             let jx = if x <= 0.0 || x >= (width - 1) as f64 { 0.0 } else { noise(params.seed, col, row) * jitter };
-            let jy = if y <= 0.0 || y >= (height - 1) as f64 {
-                0.0
-            } else {
-                noise(params.seed ^ 0xA076_1D64_78BD_642F, row, col) * jitter
-            };
-            add_point(
-                &mut points,
-                &mut seen,
-                mask.as_deref(),
-                width,
-                height,
-                x + jx,
-                y + jy,
-                spacing,
-                BASE_POINT_LIMIT,
-            );
+            let jy = if y <= 0.0 || y >= (height - 1) as f64 { 0.0 } else { noise(params.seed ^ 0xA076_1D64_78BD_642F, row, col) * jitter };
+            add_point(&mut points, &mut seen, mask.as_deref(), width, height, x + jx, y + jy, spacing, BASE_POINT_LIMIT);
             x += spacing;
             col += 1;
         }
@@ -168,34 +154,19 @@ pub fn low_poly(img: &Raster, params: &LowPolyParams) -> Result<Vec<LowPolyTrian
     }
 
     // Pin the corners so natural images cover the full raster.
-    for (x, y) in [
-        (0.0, 0.0),
-        ((width - 1) as f64, 0.0),
-        (0.0, (height - 1) as f64),
-        ((width - 1) as f64, (height - 1) as f64),
-    ] {
+    for (x, y) in [(0.0, 0.0), ((width - 1) as f64, 0.0), (0.0, (height - 1) as f64), ((width - 1) as f64, (height - 1) as f64)] {
         add_point(&mut points, &mut seen, mask.as_deref(), width, height, x, y, spacing, MAX_MESH_POINTS);
     }
 
     if let Some(mask) = mask.as_deref() {
         add_boundary_points(&mut points, &mut seen, mask, width, height, spacing);
     }
-    add_edge_points(
-        &mut points,
-        &mut seen,
-        &image,
-        mask.as_deref(),
-        spacing,
-        params.edge_preservation.min(100),
-        params.seed,
-    );
+    add_edge_points(&mut points, &mut seen, &image, mask.as_deref(), spacing, params.edge_preservation.min(100), params.seed);
 
     let mesh = triangulate(&points, width, height);
     let mut result = Vec::with_capacity(mesh.len());
     for triangle in mesh {
-        let (Some(a), Some(b), Some(c)) =
-            (points.get(triangle.a).copied(), points.get(triangle.b).copied(), points.get(triangle.c).copied())
-        else {
+        let (Some(a), Some(b), Some(c)) = (points.get(triangle.a).copied(), points.get(triangle.b).copied(), points.get(triangle.c).copied()) else {
             continue;
         };
         if orientation(a, b, c).abs() < 1e-7 {
@@ -247,11 +218,7 @@ fn make_mask(img: &Raster, params: &LowPolyParams) -> Option<Vec<bool>> {
     }
     if has_alpha {
         let threshold = params.mask_threshold.max(1);
-        return Some(
-            (0..img.height)
-                .flat_map(|y| (0..img.width).map(move |x| img.pixel(x, y)[3] >= threshold))
-                .collect(),
-        );
+        return Some((0..img.height).flat_map(|y| (0..img.width).map(move |x| img.pixel(x, y)[3] >= threshold)).collect());
     }
     if !infer_from_border {
         return None;
@@ -362,14 +329,7 @@ fn mask_at(mask: &[bool], width: u32, height: u32, x: f64, y: f64) -> bool {
     mask.get(y as usize * width as usize + x as usize).copied().unwrap_or(false)
 }
 
-fn add_boundary_points(
-    points: &mut Vec<Point2>,
-    seen: &mut HashSet<(i32, i32)>,
-    mask: &[bool],
-    width: u32,
-    height: u32,
-    spacing: f64,
-) {
+fn add_boundary_points(points: &mut Vec<Point2>, seen: &mut HashSet<(i32, i32)>, mask: &[bool], width: u32, height: u32, spacing: f64) {
     let stride = (spacing * 0.55).round().max(1.0) as u32;
     let mut buckets = HashSet::new();
     for y in 0..height {
@@ -423,17 +383,7 @@ fn add_edge_points(
             }
             let jx = noise(seed ^ 0xE703_7ED1_A0B4_28DB, u64::from(x), u64::from(y)) * jitter;
             let jy = noise(seed ^ 0x8EBC_6AF0_9C88_C6E3, u64::from(y), u64::from(x)) * jitter;
-            add_point(
-                points,
-                seen,
-                mask,
-                img.width,
-                img.height,
-                x as f64 + jx,
-                y as f64 + jy,
-                spacing,
-                MAX_MESH_POINTS,
-            );
+            add_point(points, seen, mask, img.width, img.height, x as f64 + jx, y as f64 + jy, spacing, MAX_MESH_POINTS);
         }
     }
 }
@@ -462,9 +412,7 @@ fn noise(seed: u64, x: u64, y: u64) -> f64 {
 
 fn triangle_in_mask(a: Point2, b: Point2, c: Point2, mask: &[bool], width: u32, height: u32) -> bool {
     let center = a.centroid(b, c);
-    [a, b, c, center, a.midpoint(b), b.midpoint(c), c.midpoint(a)]
-        .into_iter()
-        .all(|point| mask_at(mask, width, height, point.x, point.y))
+    [a, b, c, center, a.midpoint(b), b.midpoint(c), c.midpoint(a)].into_iter().all(|point| mask_at(mask, width, height, point.x, point.y))
 }
 
 fn sample_color(img: &Raster, a: Point2, b: Point2, c: Point2) -> [u8; 4] {
@@ -498,9 +446,18 @@ fn apply_color_mode(mut color: [u8; 4], mode: LowPolyColorMode) -> [u8; 4] {
         LowPolyColorMode::Original => color,
         LowPolyColorMode::Palette => {
             const PALETTE: [[u8; 3]; 12] = [
-                [18, 25, 44], [31, 73, 135], [18, 150, 164], [48, 157, 91],
-                [185, 211, 87], [247, 213, 70], [242, 139, 53], [232, 74, 70],
-                [191, 43, 103], [107, 61, 150], [231, 219, 199], [249, 247, 239],
+                [18, 25, 44],
+                [31, 73, 135],
+                [18, 150, 164],
+                [48, 157, 91],
+                [185, 211, 87],
+                [247, 213, 70],
+                [242, 139, 53],
+                [232, 74, 70],
+                [191, 43, 103],
+                [107, 61, 150],
+                [231, 219, 199],
+                [249, 247, 239],
             ];
             let mut nearest = PALETTE[0];
             let mut best = u32::MAX;
@@ -608,11 +565,7 @@ fn make_triangle(a: usize, b: usize, c: usize, points: &[Point2]) -> Option<Tria
     if !area.is_finite() || area.abs() <= 1e-7 {
         return None;
     }
-    if area > 0.0 {
-        Some(Triangle { a, b, c })
-    } else {
-        Some(Triangle { a: b, b: a, c })
-    }
+    if area > 0.0 { Some(Triangle { a, b, c }) } else { Some(Triangle { a: b, b: a, c }) }
 }
 
 fn orientation(a: Point2, b: Point2, c: Point2) -> f64 {
@@ -626,9 +579,7 @@ fn circumcircle_contains(a: Point2, b: Point2, c: Point2, point: Point2) -> bool
     let by = b.y - point.y;
     let cx = c.x - point.x;
     let cy = c.y - point.y;
-    let det = (ax * ax + ay * ay) * (bx * cy - by * cx)
-        - (bx * bx + by * by) * (ax * cy - ay * cx)
-        + (cx * cx + cy * cy) * (ax * by - ay * bx);
+    let det = (ax * ax + ay * ay) * (bx * cy - by * cx) - (bx * bx + by * by) * (ax * cy - ay * cx) + (cx * cx + cy * cy) * (ax * by - ay * bx);
     let area = orientation(a, b, c);
     if area > 0.0 { det > 1e-8 } else { det < -1e-8 }
 }
@@ -656,9 +607,8 @@ mod tests {
 
     #[test]
     fn opaque_silhouette_keeps_facets_inside_foreground() {
-        let image = Raster::from_fn(80, 60, |x, y| {
-            if (20..60).contains(&x) && (10..50).contains(&y) { [20, 20, 20, 255] } else { [255, 255, 255, 255] }
-        });
+        let image =
+            Raster::from_fn(80, 60, |x, y| if (20..60).contains(&x) && (10..50).contains(&y) { [20, 20, 20, 255] } else { [255, 255, 255, 255] });
         let params = LowPolyParams { mode: LowPolyMode::Silhouette, density: 40, ..LowPolyParams::default() };
         let triangles = low_poly(&image, &params).unwrap();
         assert!(!triangles.is_empty());
@@ -672,9 +622,7 @@ mod tests {
 
     #[test]
     fn transparent_pixels_do_not_create_opaque_facets() {
-        let image = Raster::from_fn(64, 64, |x, y| {
-            if (12..52).contains(&x) && (12..52).contains(&y) { [30, 180, 90, 255] } else { [0, 0, 0, 0] }
-        });
+        let image = Raster::from_fn(64, 64, |x, y| if (12..52).contains(&x) && (12..52).contains(&y) { [30, 180, 90, 255] } else { [0, 0, 0, 0] });
         let triangles = low_poly(&image, &LowPolyParams::default()).unwrap();
         assert!(!triangles.is_empty());
         assert!(triangles.iter().all(|triangle| triangle.color[3] > 0));

@@ -719,10 +719,7 @@ fn object_low_poly(s: &mut Session, p: &Value) -> Result<Value> {
                 continue;
             }
             let points = triangle.points.map(|point| {
-                im.xf * Point::new(
-                    point[0] * im.width as f64 / raster.width as f64,
-                    point[1] * im.height as f64 / raster.height as f64,
-                )
+                im.xf * Point::new(point[0] * im.width as f64 / raster.width as f64, point[1] * im.height as f64 / raster.height as f64)
             });
             let color = Color::rgb(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0);
             let mut facet = Node::path(d.alloc_id(), polygon_path(&points), Appearance::basic(Paint::solid(color), Paint::None, 0.0));
