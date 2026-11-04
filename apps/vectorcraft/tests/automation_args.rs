@@ -5,6 +5,7 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 const BIN: &str = env!("CARGO_BIN_EXE_vectorcraft");
+static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 /// Invalid roots must exit before desktop initialization on every platform, including a CI
 /// machine with no display. A regression must fail rather than hang with a window open.
@@ -15,6 +16,7 @@ fn rejects(args: &[&str], message: &str) {
 fn rejects_with_env(args: &[&str], env: &[(&str, &str)], message: &str) {
     let mut child = Command::new(BIN)
         .args(args)
+        .env_clear()
         .env_remove("VECTORCRAFT_CONTROL_PORT")
         .env_remove("VECTORCRAFT_AUTOMATION_READ_ROOT")
         .env_remove("VECTORCRAFT_AUTOMATION_WRITE_ROOT")
@@ -47,6 +49,7 @@ fn rejects_with_env(args: &[&str], env: &[(&str, &str)], message: &str) {
 
 #[test]
 fn missing_empty_or_option_operands_fail_before_startup() {
+    let _guard = TEST_LOCK.lock().unwrap();
     for flag in ["--automation-read-root", "--automation-write-root"] {
         rejects(&["--control", "7979", flag], &format!("{flag} needs a folder"));
         rejects(&[flag], &format!("{flag} needs a folder"));
@@ -60,6 +63,7 @@ fn missing_empty_or_option_operands_fail_before_startup() {
 
 #[test]
 fn duplicate_roots_fail_for_both_spellings() {
+    let _guard = TEST_LOCK.lock().unwrap();
     for flag in ["--automation-read-root", "--automation-write-root"] {
         rejects(&[flag, ".", &format!("{flag}=.")], &format!("{flag} given twice"));
         rejects(&[&format!("{flag}=."), flag, "."], &format!("{flag} given twice"));
@@ -68,6 +72,7 @@ fn duplicate_roots_fail_for_both_spellings() {
 
 #[test]
 fn explicit_dash_folder_does_not_consume_version() {
+    let _guard = TEST_LOCK.lock().unwrap();
     let out = Command::new(BIN).args(["--automation-read-root=-folder", "--automation-write-root", "./-folder", "--version"]).output().unwrap();
     assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
     assert_eq!(String::from_utf8(out.stdout).unwrap(), format!("vectorcraft {}\n", env!("CARGO_PKG_VERSION")));
@@ -78,6 +83,7 @@ fn explicit_dash_folder_does_not_consume_version() {
 /// argument after it isn't reinterpreted (#1373).
 #[test]
 fn control_without_a_valid_port_fails_before_startup() {
+    let _guard = TEST_LOCK.lock().unwrap();
     let need = "--control needs a port number from 1 to 65535";
     rejects(&["--control", "--automation-read-root", ".", "--automation-write-root", "."], &format!("{need}, not `--automation-read-root`"));
     rejects(&["--control"], need);
@@ -90,6 +96,7 @@ fn control_without_a_valid_port_fails_before_startup() {
 
 #[test]
 fn version_wins_over_a_bad_control_port_variable() {
+    let _guard = TEST_LOCK.lock().unwrap();
     let out = Command::new(BIN).arg("--version").env("VECTORCRAFT_CONTROL_PORT", "abc").output().unwrap();
     assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
     assert_eq!(String::from_utf8(out.stdout).unwrap(), format!("vectorcraft {}\n", env!("CARGO_PKG_VERSION")));
