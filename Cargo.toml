@@ -45,6 +45,7 @@ vectorcraft-scriptcheck = { path = "crates/scriptcheck" }
 
 # foundation
 kurbo = { version = "0.13", features = ["serde"] }
+spade = "2.15.1"
 peniko = "0.6"
 thiserror = "2"
 serde = { version = "1", features = ["derive", "rc"] }
