@@ -1,7 +1,7 @@
 //! Low-poly triangulation for raster images.
 //!
-//! This module builds a jittered sampling grid, adds points along strong image edges and optional
-//! foreground boundaries, then connects the points with a Bowyer-Watson Delaunay triangulation.
+//! This module builds a jittered sampling grid, adds points along strong image edges and traced
+//! foreground contours, then connects the points with a Bowyer-Watson Delaunay triangulation.
 //! Each triangle is coloured from samples of the source image. This is original Rust code and has
 //! no dependency on third-party tracing implementations.
 
@@ -273,48 +273,26 @@ fn add_point(
     height: u32,
     x: f64,
     y: f64,
-    spacing: f64,
+    _spacing: f64,
     limit: usize,
 ) {
     if points.len() >= limit || !x.is_finite() || !y.is_finite() {
         return;
     }
-    let mut point = Point2 { x: x.clamp(0.0, (width - 1) as f64), y: y.clamp(0.0, (height - 1) as f64) };
+
+    let point = Point2 { x: x.clamp(0.0, (width - 1) as f64), y: y.clamp(0.0, (height - 1) as f64) };
+
     if let Some(mask) = mask
         && !mask_at(mask, width, height, point.x, point.y)
     {
-        let Some(snapped) = nearest_foreground(mask, width, height, point, spacing) else { return };
-        point = snapped;
+        return;
     }
+
     let key = (point.x.round() as i32, point.y.round() as i32);
+
     if seen.insert(key) {
         points.push(point);
     }
-}
-
-fn nearest_foreground(mask: &[bool], width: u32, height: u32, point: Point2, spacing: f64) -> Option<Point2> {
-    let radius = ((spacing * 0.4).ceil() as i32).clamp(1, 16);
-    let cx = point.x.round() as i32;
-    let cy = point.y.round() as i32;
-    let mut best = None;
-    let mut best_distance = f64::INFINITY;
-    for dy in -radius..=radius {
-        for dx in -radius..=radius {
-            let x = cx + dx;
-            let y = cy + dy;
-            if x < 0 || y < 0 || x >= width as i32 || y >= height as i32 {
-                continue;
-            }
-            if mask_at(mask, width, height, x as f64, y as f64) {
-                let distance = (dx * dx + dy * dy) as f64;
-                if distance < best_distance {
-                    best_distance = distance;
-                    best = Some(Point2 { x: x as f64, y: y as f64 });
-                }
-            }
-        }
-    }
-    best
 }
 
 fn mask_at(mask: &[bool], width: u32, height: u32, x: f64, y: f64) -> bool {
@@ -330,29 +308,94 @@ fn mask_at(mask: &[bool], width: u32, height: u32, x: f64, y: f64) -> bool {
 }
 
 fn add_boundary_points(points: &mut Vec<Point2>, seen: &mut HashSet<(i32, i32)>, mask: &[bool], width: u32, height: u32, spacing: f64) {
-    let stride = (spacing * 0.55).round().max(1.0) as u32;
-    let mut buckets = HashSet::new();
-    for y in 0..height {
-        if points.len() >= MAX_MESH_POINTS {
-            break;
-        }
-        for x in 0..width {
-            if points.len() >= MAX_MESH_POINTS {
-                break;
-            }
-            if !mask_at(mask, width, height, x as f64, y as f64) {
+    let target_spacing = (spacing * 0.9).clamp(4.0, 24.0);
+    let inset = 0.5;
+
+    let components = crate::trace_mask(mask, width as usize, height as usize);
+
+    for component in components {
+        for boundary in std::iter::once(&component.outer).chain(component.holes.iter()) {
+            let pts = &boundary.pts;
+
+            if pts.len() < 2 {
                 continue;
             }
-            let edge = x == 0
-                || y == 0
-                || x + 1 >= width
-                || y + 1 >= height
-                || !mask_at(mask, width, height, x.saturating_sub(1) as f64, y as f64)
-                || !mask_at(mask, width, height, (x + 1) as f64, y as f64)
-                || !mask_at(mask, width, height, x as f64, y.saturating_sub(1) as f64)
-                || !mask_at(mask, width, height, x as f64, (y + 1) as f64);
-            if edge && buckets.insert((x / stride, y / stride)) {
-                add_point(points, seen, Some(mask), width, height, x as f64, y as f64, spacing, MAX_MESH_POINTS);
+
+            let normal = |from: (i32, i32), to: (i32, i32)| {
+                let dx = f64::from(to.0 - from.0);
+                let dy = f64::from(to.1 - from.1);
+                let length = (dx * dx + dy * dy).sqrt();
+
+                if length <= f64::EPSILON { None } else { Some((-dy / length, dx / length)) }
+            };
+
+            // Add one inset point at each actual contour corner.
+            for i in 0..pts.len() {
+                let previous = pts[(i + pts.len() - 1) % pts.len()];
+                let current = pts[i];
+                let next = pts[(i + 1) % pts.len()];
+
+                let incoming = normal(previous, current);
+                let outgoing = normal(current, next);
+
+                let (mut nx, mut ny) = match (incoming, outgoing) {
+                    (Some((ix, iy)), Some((ox, oy))) => (ix + ox, iy + oy),
+                    (Some(n), None) | (None, Some(n)) => n,
+                    (None, None) => continue,
+                };
+
+                let magnitude = (nx * nx + ny * ny).sqrt();
+
+                if magnitude <= 1e-6 {
+                    let Some((fx, fy)) = outgoing.or(incoming) else {
+                        continue;
+                    };
+                    nx = fx;
+                    ny = fy;
+                } else {
+                    nx /= magnitude;
+                    ny /= magnitude;
+                }
+
+                add_point(
+                    points,
+                    seen,
+                    Some(mask),
+                    width,
+                    height,
+                    f64::from(current.0) - 0.5 + nx * inset,
+                    f64::from(current.1) - 0.5 + ny * inset,
+                    spacing,
+                    MAX_MESH_POINTS,
+                );
+            }
+
+            // Add evenly spaced points along each contour segment.
+            for i in 0..pts.len() {
+                let a = pts[i];
+                let b = pts[(i + 1) % pts.len()];
+
+                let dx = f64::from(b.0 - a.0);
+                let dy = f64::from(b.1 - a.1);
+                let length = (dx * dx + dy * dy).sqrt();
+
+                if length <= f64::EPSILON {
+                    continue;
+                }
+
+                let divisions = (length / target_spacing).ceil().max(1.0) as usize;
+
+                let nx = -dy / length;
+                let ny = dx / length;
+
+                for part in 1..divisions {
+                    let t = part as f64 / divisions as f64;
+
+                    let x = f64::from(a.0) - 0.5 + dx * t + nx * inset;
+                    let y = f64::from(a.1) - 0.5 + dy * t + ny * inset;
+
+                    add_point(points, seen, Some(mask), width, height, x, y, spacing, MAX_MESH_POINTS);
+                }
             }
         }
     }
@@ -370,19 +413,32 @@ fn add_edge_points(
     let step = (spacing * 0.55).round().max(1.0) as u32;
     let threshold = 105.0 - f64::from(edge_preservation) * 0.8;
     let jitter = spacing * 0.12;
+
     for y in (0..img.height).step_by(step as usize) {
         if points.len() >= MAX_MESH_POINTS {
             break;
         }
+
         for x in (0..img.width).step_by(step as usize) {
             if points.len() >= MAX_MESH_POINTS {
                 break;
             }
+
             if edge_strength(img, x, y) < threshold {
                 continue;
             }
+
+            // Ignore edge samples outside the foreground. `add_point` also checks the
+            // jittered location, so jitter cannot move a point into transparent pixels.
+            if let Some(mask) = mask
+                && !mask_at(mask, img.width, img.height, x as f64, y as f64)
+            {
+                continue;
+            }
+
             let jx = noise(seed ^ 0xE703_7ED1_A0B4_28DB, u64::from(x), u64::from(y)) * jitter;
             let jy = noise(seed ^ 0x8EBC_6AF0_9C88_C6E3, u64::from(y), u64::from(x)) * jitter;
+
             add_point(points, seen, mask, img.width, img.height, x as f64 + jx, y as f64 + jy, spacing, MAX_MESH_POINTS);
         }
     }
@@ -617,6 +673,57 @@ mod tests {
             let x = ((a[0] + b[0] + c[0]) / 3.0).round() as u32;
             let y = ((a[1] + b[1] + c[1]) / 3.0).round() as u32;
             assert!((20..60).contains(&x) && (10..50).contains(&y));
+        }
+    }
+
+    #[test]
+    fn medium_density_keeps_narrow_silhouette_legs_covered() {
+        fn contains(triangle: &LowPolyTriangle, x: f64, y: f64) -> bool {
+            let [a, b, c] = triangle.points;
+
+            let sign = |p1: [f64; 2], p2: [f64; 2]| (x - p2[0]) * (p1[1] - p2[1]) - (p1[0] - p2[0]) * (y - p2[1]);
+
+            let d1 = sign(a, b);
+            let d2 = sign(b, c);
+            let d3 = sign(c, a);
+
+            let has_negative = d1 < -1e-6 || d2 < -1e-6 || d3 < -1e-6;
+            let has_positive = d1 > 1e-6 || d2 > 1e-6 || d3 > 1e-6;
+
+            !(has_negative && has_positive)
+        }
+
+        let image = Raster::from_fn(600, 400, |x, y| {
+            let body = (140..460).contains(&x) && (30..245).contains(&y);
+
+            let legs = [(170..205, 220..365), (245..280, 220..375), (330..365, 220..375), (405..440, 220..365)];
+
+            let on_leg = legs.iter().any(|(xr, yr)| xr.contains(&x) && yr.contains(&y));
+
+            if body || on_leg { [10, 10, 10, 255] } else { [0, 0, 0, 0] }
+        });
+
+        let params = LowPolyParams {
+            mode: LowPolyMode::Silhouette,
+            boundary: LowPolyBoundary::Transparent,
+            density: 45,
+            edge_preservation: 70,
+            seed: 1,
+            ..LowPolyParams::default()
+        };
+
+        let triangles = low_poly(&image, &params).expect("generate narrow silhouette");
+
+        assert!(!triangles.is_empty());
+
+        for (x_start, x_end) in [(175, 200), (250, 275), (335, 360), (410, 435)] {
+            for y in (255..345).step_by(10) {
+                for x in (x_start..x_end).step_by(5) {
+                    let covered = triangles.iter().any(|triangle| contains(triangle, x as f64, y as f64));
+
+                    assert!(covered, "missing triangle coverage at ({x}, {y})");
+                }
+            }
         }
     }
 
